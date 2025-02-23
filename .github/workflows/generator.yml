@@ -134,7 +134,7 @@ jobs:
           pip install pycargoebuild
           wget https://raw.githubusercontent.com/gentoo/gentoo/refs/heads/master/metadata/license-mapping.conf -O /tmp/license-mapping.conf
           cd "input/${WORKDIR}"
-          pycargoebuild --crate-tarball --distdir /tmp/ --license-mapping /tmp/license-mapping.conf
+          pycargoebuild -o ${P}.ebuild --crate-tarball --crate-tarball-path /tmp/${P}-crates.tar.xz --distdir /tmp/ --license-mapping /tmp/license-mapping.conf
 
       - name:  Generate rust crates && Generate golang deps
         if: inputs.LANG == 'rust & golang'
