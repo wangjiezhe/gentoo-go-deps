@@ -15,6 +15,7 @@ on:
         - javascript
         - javascript(pnpm)
         - rust
+        - rust & golang
 
       REPO:
         description: "github repo name: XTLS/Xray-core"
@@ -30,6 +31,10 @@ on:
 
       WORKDIR:
         description: "(optional) source directory to perform scripts"
+        default: ''
+
+      WORKDIR2:
+        description: "(optional) second source directory to perform scripts"
         default: ''
 
       VENDORDIR:
@@ -66,7 +71,7 @@ jobs:
           git tag --delete ${P} || echo yes
 
       - name: update go version
-        if: inputs.LANG == 'golang'
+        if: inputs.LANG == 'golang' || inputs.LANG == 'rust & golang'
         uses: actions/setup-go@v5
         with:
           go-version: 'stable'
@@ -131,6 +136,28 @@ jobs:
           cd "input/${WORKDIR}"
           pycargoebuild --crate-tarball --distdir /tmp/ --license-mapping /tmp/license-mapping.conf
 
+      - name:  Generate rust crates && Generate golang deps
+        if: inputs.LANG == 'rust & golang'
+        env:
+          P: ${{ inputs.P }}
+          WORKDIR: ${{ inputs.WORKDIR }}
+          WORKDIR2: ${{ inputs.WORKDIR2 }}
+          VENDORDIR: ${{ inputs.VENDORDIR }}
+        run: |
+          git tag ${P} -m "${P}-crates.tar.xz ${P}-deps.tar.xz ${P}-vendor.tar.xz"
+          pip install pycargoebuild
+          wget https://raw.githubusercontent.com/gentoo/gentoo/refs/heads/master/metadata/license-mapping.conf -O /tmp/license-mapping.conf
+          cd "input/${WORKDIR}"
+          pycargoebuild --crate-tarball --distdir /tmp/ --license-mapping /tmp/license-mapping.conf
+          cd "input/${WORKDIR2}"
+          GOMODCACHE="${PWD}"/go-mod go mod download -modcacherw
+          tar --create --auto-compress --file /tmp/${P}-deps.tar.xz go-mod
+          if [[ ! -f go.work && x"${VENDORDIR}" != x"" ]]; then
+            rm -rf go-mod
+            go mod vendor -modcacherw -o ${VENDORDIR}/vendor
+            tar --create --auto-compress --file /tmp/${P}-vendor.tar.xz ${VENDORDIR}/vendor
+          fi
+
       - name: push tag
         uses: ad-m/github-push-action@master
         with:
@@ -139,7 +166,7 @@ jobs:
           tags: true
 
       - name: upload golang deps to release artifaces
-        if: inputs.LANG == 'golang'
+        if: inputs.LANG == 'golang' || inputs.LANG == 'rust & golang'
         uses: softprops/action-gh-release@v2
         with:
           files: |
@@ -171,7 +198,7 @@ jobs:
           tag_name: ${{ inputs.P }}
 
       - name: upload rust crates to release artifaces
-        if: inputs.LANG == 'rust'
+        if: inputs.LANG == 'rust' || inputs.LANG == 'rust & golang'
         uses: softprops/action-gh-release@v2
         with:
           files: |
