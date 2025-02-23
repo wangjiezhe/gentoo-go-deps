@@ -148,9 +148,9 @@ jobs:
           pip install pycargoebuild
           wget https://raw.githubusercontent.com/gentoo/gentoo/refs/heads/master/metadata/license-mapping.conf -O /tmp/license-mapping.conf
           pushd "input/${WORKDIR}"
-          pycargoebuild --crate-tarball --distdir /tmp/ --license-mapping /tmp/license-mapping.conf
+          pycargoebuild -o ${P}.ebuild --crate-tarball --crate-tarball-path /tmp/${P}-crates.tar.xz --distdir /tmp/ --license-mapping /tmp/license-mapping.conf
           popd
-          cd "input/${WORKDIR2}"
+          pushd "input/${WORKDIR2}"
           GOMODCACHE="${PWD}"/go-mod go mod download -modcacherw
           tar --create --auto-compress --file /tmp/${P}-deps.tar.xz go-mod
           if [[ ! -f go.work && x"${VENDORDIR}" != x"" ]]; then
@@ -158,6 +158,7 @@ jobs:
             go mod vendor -modcacherw -o ${VENDORDIR}/vendor
             tar --create --auto-compress --file /tmp/${P}-vendor.tar.xz ${VENDORDIR}/vendor
           fi
+          popd
 
       - name: push tag
         uses: ad-m/github-push-action@master
