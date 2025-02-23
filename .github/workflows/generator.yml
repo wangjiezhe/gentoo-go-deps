@@ -147,8 +147,9 @@ jobs:
           git tag ${P} -m "${P}-crates.tar.xz ${P}-deps.tar.xz ${P}-vendor.tar.xz"
           pip install pycargoebuild
           wget https://raw.githubusercontent.com/gentoo/gentoo/refs/heads/master/metadata/license-mapping.conf -O /tmp/license-mapping.conf
-          cd "input/${WORKDIR}"
+          pushd "input/${WORKDIR}"
           pycargoebuild --crate-tarball --distdir /tmp/ --license-mapping /tmp/license-mapping.conf
+          popd
           cd "input/${WORKDIR2}"
           GOMODCACHE="${PWD}"/go-mod go mod download -modcacherw
           tar --create --auto-compress --file /tmp/${P}-deps.tar.xz go-mod
