@@ -134,6 +134,9 @@ jobs:
           pip install pycargoebuild
           wget https://raw.githubusercontent.com/gentoo/gentoo/refs/heads/master/metadata/license-mapping.conf -O /tmp/license-mapping.conf
           cd "input/${WORKDIR}"
+          if [[ ! -f Cargo.lock ]]; then
+            cargo generate-lockfile
+          fi
           pycargoebuild -o ${P}.ebuild --crate-tarball --crate-tarball-path /tmp/${P}-crates.tar.xz --distdir /tmp/ --license-mapping /tmp/license-mapping.conf
 
       - name:  Generate rust crates && Generate golang deps
@@ -148,6 +151,9 @@ jobs:
           pip install pycargoebuild
           wget https://raw.githubusercontent.com/gentoo/gentoo/refs/heads/master/metadata/license-mapping.conf -O /tmp/license-mapping.conf
           pushd "input/${WORKDIR}"
+          if [[ ! -f Cargo.lock ]]; then
+            cargo generate-lockfile
+          fi
           pycargoebuild -o ${P}.ebuild --crate-tarball --crate-tarball-path /tmp/${P}-crates.tar.xz --distdir /tmp/ --license-mapping /tmp/license-mapping.conf
           popd
           pushd "input/${WORKDIR2}"
