@@ -41,6 +41,10 @@ on:
         description: "(optional) golang vendor.tar.xz, input S in ebuild: Xray-core-24.11.11"
         default: ''
 
+      GENERATE_LOCKFILE:
+        type: boolean
+        description: "(optional) regenerate Cargo.lock"
+
 jobs:
   Generator:
     permissions: write-all # required by push tag
@@ -129,12 +133,13 @@ jobs:
         env:
           P: ${{ inputs.P }}
           WORKDIR: ${{ inputs.WORKDIR }}
+          GENERATE_LOCKFILE: ${{ inputs.GENERATE_LOCKFILE }}
         run: |
           git tag ${P} -m "${P}-crates.tar.xz"
           pip install pycargoebuild
           wget https://raw.githubusercontent.com/gentoo/gentoo/refs/heads/master/metadata/license-mapping.conf -O /tmp/license-mapping.conf
           cd "input/${WORKDIR}"
-          if [[ ! -f Cargo.lock ]]; then
+          if ${GENERATE_LOCKFILE} && [[ ! -f Cargo.lock ]]; then
             cargo generate-lockfile
           fi
           pycargoebuild -o ${P}.ebuild --crate-tarball --crate-tarball-path /tmp/${P}-crates.tar.xz --distdir /tmp/ --license-mapping /tmp/license-mapping.conf
@@ -146,12 +151,13 @@ jobs:
           WORKDIR: ${{ inputs.WORKDIR }}
           WORKDIR2: ${{ inputs.WORKDIR2 }}
           VENDORDIR: ${{ inputs.VENDORDIR }}
+          GENERATE_LOCKFILE: ${{ inputs.GENERATE_LOCKFILE }}
         run: |
           git tag ${P} -m "${P}-crates.tar.xz ${P}-deps.tar.xz ${P}-vendor.tar.xz"
           pip install pycargoebuild
           wget https://raw.githubusercontent.com/gentoo/gentoo/refs/heads/master/metadata/license-mapping.conf -O /tmp/license-mapping.conf
           pushd "input/${WORKDIR}"
-          if [[ ! -f Cargo.lock ]]; then
+          if ${GENERATE_LOCKFILE} && [[ ! -f Cargo.lock ]]; then
             cargo generate-lockfile
           fi
           pycargoebuild -o ${P}.ebuild --crate-tarball --crate-tarball-path /tmp/${P}-crates.tar.xz --distdir /tmp/ --license-mapping /tmp/license-mapping.conf
