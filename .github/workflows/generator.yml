@@ -76,7 +76,7 @@ jobs:
 
       - name: update go version
         if: inputs.LANG == 'golang' || inputs.LANG == 'rust & golang'
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: 'stable'
           cache: false
