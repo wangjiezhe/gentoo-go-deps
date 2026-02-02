@@ -16,6 +16,7 @@ on:
         - javascript(pnpm)
         - rust
         - rust & golang
+        - golang & javascript
 
       REPO:
         description: "github repo name: XTLS/Xray-core"
@@ -144,7 +145,7 @@ jobs:
           fi
           pycargoebuild -o ${P}.ebuild --crate-tarball --crate-tarball-path /tmp/${P}-crates.tar.xz --distdir /tmp/ --license-mapping /tmp/license-mapping.conf
 
-      - name:  Generate rust crates && Generate golang deps
+      - name: Generate rust crates && Generate golang deps
         if: inputs.LANG == 'rust & golang'
         env:
           P: ${{ inputs.P }}
@@ -172,6 +173,30 @@ jobs:
           fi
           popd
 
+      - name: Generate golang deps && Generate javascript node_modules
+        if: inputs.LANG == 'golang & javascript'
+        env:
+          P: ${{ inputs.P }}
+          WORKDIR: ${{ inputs.WORKDIR }}
+          WORKDIR2: ${{ inputs.WORKDIR2 }}
+          VENDORDIR: ${{ inputs.VENDORDIR }}
+        run: |
+          git tag ${P} -m "${P}-deps.tar.xz ${P}-vendor.tar.xz ${P}-node_modules.tar.xz"
+          pushd "input/${WORKDIR}"
+          GOMODCACHE="${PWD}"/go-mod go mod download -modcacherw
+          tar --create --auto-compress --file /tmp/${P}-deps.tar.xz go-mod
+          if [[ ! -f go.work && x"${VENDORDIR}" != x"" ]]; then
+            rm -rf go-mod
+            go mod vendor -modcacherw -o ${VENDORDIR}/vendor
+            tar --create --auto-compress --file /tmp/${P}-vendor.tar.xz ${VENDORDIR}/vendor
+          fi
+          popd
+          pushd "input/${WORKDIR2}"
+          npm install --legacy-peer-deps --cache "${PWD}"/npm-cache
+          tar --create --auto-compress --file /tmp/${P}-node_modules.tar.xz node_modules
+          rm -rf node_modules
+          popd
+
       - name: push tag
         uses: ad-m/github-push-action@master
         with:
@@ -180,7 +205,7 @@ jobs:
           tags: true
 
       - name: upload golang deps to release artifaces
-        if: inputs.LANG == 'golang' || inputs.LANG == 'rust & golang'
+        if: inputs.LANG == 'golang' || inputs.LANG == 'rust & golang' || inputs.LANG == 'golang & javascript'
         uses: softprops/action-gh-release@v2
         with:
           files: |
@@ -196,7 +221,7 @@ jobs:
           tag_name: ${{ inputs.P }}
 
       - name: upload javascript node_modules to release artifaces
-        if: inputs.LANG == 'javascript'
+        if: inputs.LANG == 'javascript' || inputs.LANG == 'golang & javascript'
         uses: softprops/action-gh-release@v2
         with:
           files: |
