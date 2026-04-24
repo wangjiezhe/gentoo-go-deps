@@ -206,7 +206,7 @@ jobs:
 
       - name: upload golang deps to release artifaces
         if: inputs.LANG == 'golang' || inputs.LANG == 'rust & golang' || inputs.LANG == 'golang & javascript'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             /tmp/${{ inputs.P }}-deps.tar.xz
@@ -214,7 +214,7 @@ jobs:
 
       - name: upload golang vendor to release artifaces
         if: inputs.LANG == 'golang' && inputs.VENDORDIR != ''
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             /tmp/${{ inputs.P }}-vendor.tar.xz
@@ -222,7 +222,7 @@ jobs:
 
       - name: upload javascript node_modules to release artifaces
         if: inputs.LANG == 'javascript' || inputs.LANG == 'golang & javascript'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             /tmp/${{ inputs.P }}-node_modules.tar.xz
@@ -230,7 +230,7 @@ jobs:
 
       - name: upload javascript(pnpm) node_modules to release artifaces
         if: inputs.LANG == 'javascript(pnpm)'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             /tmp/${{ inputs.P }}-node_modules-pnpm.tar.xz
@@ -238,7 +238,7 @@ jobs:
 
       - name: upload rust crates to release artifaces
         if: inputs.LANG == 'rust' || inputs.LANG == 'rust & golang'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             /tmp/${{ inputs.P }}-crates.tar.xz
