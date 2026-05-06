@@ -245,7 +245,7 @@ jobs:
           tags: true
 
       - name: upload golang deps to release artifaces
-        if: inputs.LANG == 'golang' || inputs.LANG == 'rust & golang' || inputs.LANG == 'golang & javascript'
+        if: inputs.LANG == 'golang' || inputs.LANG == 'rust & golang' || inputs.LANG == 'golang & javascript' || inputs.LANG == 'rust & rust & golang'
         uses: softprops/action-gh-release@v3
         with:
           files: |
@@ -283,4 +283,5 @@ jobs:
           files: |
             /tmp/*-crates.tar.xz
             input/${{ inputs.WORKDIR }}/*.ebuild
+            input/${{ inputs.WORKDIR2 }}/*.ebuild
           tag_name: ${{ inputs.P }}
