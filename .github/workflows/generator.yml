@@ -143,7 +143,7 @@ jobs:
           if ${GENERATE_LOCKFILE} && [[ ! -f Cargo.lock ]]; then
             cargo generate-lockfile
           fi
-          pycargoebuild -o ${P}.ebuild --crate-tarball --crate-tarball-path /tmp/${P}-crates.tar.xz --distdir /tmp/ --license-mapping /tmp/license-mapping.conf
+          pycargoebuild --crate-tarball --distdir /tmp/ --license-mapping /tmp/license-mapping.conf
 
       - name: Generate rust crates && Generate golang deps
         if: inputs.LANG == 'rust & golang'
@@ -161,7 +161,7 @@ jobs:
           if ${GENERATE_LOCKFILE} && [[ ! -f Cargo.lock ]]; then
             cargo generate-lockfile
           fi
-          pycargoebuild -o ${P}.ebuild --crate-tarball --crate-tarball-path /tmp/${P}-crates.tar.xz --distdir /tmp/ --license-mapping /tmp/license-mapping.conf
+          pycargoebuild --crate-tarball --distdir /tmp/ --license-mapping /tmp/license-mapping.conf
           popd
           pushd "input/${WORKDIR2}"
           GOMODCACHE="${PWD}"/go-mod go mod download -modcacherw
@@ -241,6 +241,6 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           files: |
-            /tmp/${{ inputs.P }}-crates.tar.xz
-            input/${{ inputs.WORKDIR }}/${{ inputs.P }}.ebuild
+            /tmp/*-crates.tar.xz
+            input/${{ inputs.WORKDIR }}/*.ebuild
           tag_name: ${{ inputs.P }}
