@@ -16,6 +16,7 @@ on:
         - javascript(pnpm)
         - rust
         - rust & golang
+        - rust & rust & golang
         - golang & javascript
 
       REPO:
@@ -36,6 +37,10 @@ on:
 
       WORKDIR2:
         description: "(optional) second source directory to perform scripts"
+        default: ''
+
+      WORKDIR3:
+        description: "(optional) third source directory to perform scripts"
         default: ''
 
       VENDORDIR:
@@ -173,6 +178,41 @@ jobs:
           fi
           popd
 
+      - name: Generate rust crates twice && Generate golang deps
+        if: inputs.LANG == 'rust & rust & golang'
+        env:
+          P: ${{ inputs.P }}
+          WORKDIR: ${{ inputs.WORKDIR }}
+          WORKDIR2: ${{ inputs.WORKDIR2 }}
+          WORKDIR3: ${{ inputs.WORKDIR3 }}
+          VENDORDIR: ${{ inputs.VENDORDIR }}
+          GENERATE_LOCKFILE: ${{ inputs.GENERATE_LOCKFILE }}
+        run: |
+          git tag ${P} -m "${P}-crates.tar.xz ${P}-deps.tar.xz ${P}-vendor.tar.xz"
+          pip install pycargoebuild
+          wget https://raw.githubusercontent.com/gentoo/gentoo/refs/heads/master/metadata/license-mapping.conf -O /tmp/license-mapping.conf
+          pushd "input/${WORKDIR}"
+          if ${GENERATE_LOCKFILE} && [[ ! -f Cargo.lock ]]; then
+            cargo generate-lockfile
+          fi
+          pycargoebuild --crate-tarball --distdir /tmp/ --license-mapping /tmp/license-mapping.conf
+          popd
+          pushd "input/${WORKDIR2}"
+          if ${GENERATE_LOCKFILE} && [[ ! -f Cargo.lock ]]; then
+            cargo generate-lockfile
+          fi
+          pycargoebuild --crate-tarball --distdir /tmp/ --license-mapping /tmp/license-mapping.conf
+          popd
+          pushd "input/${WORKDIR3}"
+          GOMODCACHE="${PWD}"/go-mod go mod download -modcacherw
+          tar --create --auto-compress --file /tmp/${P}-deps.tar.xz go-mod
+          if [[ ! -f go.work && x"${VENDORDIR}" != x"" ]]; then
+            rm -rf go-mod
+            go mod vendor -modcacherw -o ${VENDORDIR}/vendor
+            tar --create --auto-compress --file /tmp/${P}-vendor.tar.xz ${VENDORDIR}/vendor
+          fi
+          popd
+
       - name: Generate golang deps && Generate javascript node_modules
         if: inputs.LANG == 'golang & javascript'
         env:
@@ -237,7 +277,7 @@ jobs:
           tag_name: ${{ inputs.P }}
 
       - name: upload rust crates to release artifaces
-        if: inputs.LANG == 'rust' || inputs.LANG == 'rust & golang'
+        if: inputs.LANG == 'rust' || inputs.LANG == 'rust & golang' || inputs.LANG == 'rust & rust & golang'
         uses: softprops/action-gh-release@v3
         with:
           files: |
