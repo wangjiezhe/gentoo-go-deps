@@ -31,7 +31,7 @@ on:
         required: true
 
       WORKDIR:
-        description: "(optional) source directory to perform scripts"
+        description: "(optional) source directory to perform scripts, seperated by comma"
         default: ''
 
       WORKDIR2:
@@ -139,11 +139,17 @@ jobs:
           git tag ${P} -m "${P}-crates.tar.xz"
           pip install pycargoebuild
           wget https://raw.githubusercontent.com/gentoo/gentoo/refs/heads/master/metadata/license-mapping.conf -O /tmp/license-mapping.conf
-          cd "input/${WORKDIR}"
-          if ${GENERATE_LOCKFILE} && [[ ! -f Cargo.lock ]]; then
-            cargo generate-lockfile
-          fi
-          pycargoebuild --crate-tarball --distdir /tmp/ --license-mapping /tmp/license-mapping.conf
+          workdirs=()
+          IFS=',' read -ra workdirs <<< "${WORKDIR}"
+          for curr_dir in "${workdirs[@]}"; do
+            pushd "input/${curr_dir}"
+            if ${GENERATE_LOCKFILE} && [[ ! -f Cargo.lock ]]; then
+              cargo generate-lockfile
+            fi
+            pycargoebuild --crate-tarball --distdir /tmp/ --license-mapping /tmp/license-mapping.conf
+            mv *.ebuild /tmp/
+            popd
+          done
 
       - name: Generate rust crates && Generate golang deps
         if: inputs.LANG == 'rust & golang'
@@ -157,12 +163,17 @@ jobs:
           git tag ${P} -m "${P}-crates.tar.xz ${P}-deps.tar.xz ${P}-vendor.tar.xz"
           pip install pycargoebuild
           wget https://raw.githubusercontent.com/gentoo/gentoo/refs/heads/master/metadata/license-mapping.conf -O /tmp/license-mapping.conf
-          pushd "input/${WORKDIR}"
-          if ${GENERATE_LOCKFILE} && [[ ! -f Cargo.lock ]]; then
-            cargo generate-lockfile
-          fi
-          pycargoebuild --crate-tarball --distdir /tmp/ --license-mapping /tmp/license-mapping.conf
-          popd
+          workdirs=()
+          IFS=',' read -ra workdirs <<< "${WORKDIR}"
+          for curr_dir in "${workdirs[@]}"; do
+            pushd "input/${curr_dir}"
+            if ${GENERATE_LOCKFILE} && [[ ! -f Cargo.lock ]]; then
+              cargo generate-lockfile
+            fi
+            pycargoebuild --crate-tarball --distdir /tmp/ --license-mapping /tmp/license-mapping.conf
+            mv *.ebuild /tmp/
+            popd
+          done
           pushd "input/${WORKDIR2}"
           GOMODCACHE="${PWD}"/go-mod go mod download -modcacherw
           tar --create --auto-compress --file /tmp/${P}-deps.tar.xz go-mod
@@ -242,5 +253,5 @@ jobs:
         with:
           files: |
             /tmp/*-crates.tar.xz
-            input/${{ inputs.WORKDIR }}/*.ebuild
+            /tmp/*.ebuild
           tag_name: ${{ inputs.P }}
