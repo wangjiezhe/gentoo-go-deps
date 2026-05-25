@@ -133,7 +133,7 @@ jobs:
         if: inputs.LANG == 'rust'
         env:
           P: ${{ inputs.P }}
-          WORKDIR: ${{ inputs.WORKDIR }}
+          WORKDIR: ${{ inputs.WORKDIR || '.' }}
           GENERATE_LOCKFILE: ${{ inputs.GENERATE_LOCKFILE }}
         run: |
           git tag ${P} -m "${P}-crates.tar.xz"
@@ -155,7 +155,7 @@ jobs:
         if: inputs.LANG == 'rust & golang'
         env:
           P: ${{ inputs.P }}
-          WORKDIR: ${{ inputs.WORKDIR }}
+          WORKDIR: ${{ inputs.WORKDIR || '.' }}
           WORKDIR2: ${{ inputs.WORKDIR2 }}
           VENDORDIR: ${{ inputs.VENDORDIR }}
           GENERATE_LOCKFILE: ${{ inputs.GENERATE_LOCKFILE }}
